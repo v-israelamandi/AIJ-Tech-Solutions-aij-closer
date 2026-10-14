@@ -206,6 +206,37 @@ real project by accident — and it must never be, because
 `supabase/test-support/` is test-only scaffolding that stands in for Supabase's
 own bootstrap.
 
+### Demo seed data
+The one demo tenant every later feature is built against lives in
+[`supabase/seed/`](supabase/seed/): **Sisi Lagos Fashion**, slug
+`sisi-lagos-fashion` — 20 products with `list_price` and `floor_price` in kobo,
+its `policies` row (delivery fees by zone, the discount ladder, the handoff
+rules), 16 buyer FAQs, its owner and both Meta channels (WhatsApp
+`phone_number_id = 109876543210987`, Instagram
+`instagram_account_id = 17841400000000001` — the values PR 4's webhook routing
+resolves tenants by).
+
+```bash
+createdb aij_dev
+export DATABASE_URL=postgresql://localhost/aij_dev
+npm run test:db               # shim -> migrations -> RLS assertions
+npm run seed                  # the demo tenant, then 188 assertions on it
+npm run seed -- --twice       # seed it twice and compare fingerprints (what CI runs)
+```
+
+`npm run seed` is `supabase/seed/run.sh`, `psql`-only like the database tests. It
+is idempotent — the seed deletes and re-inserts only the tenant whose slug is
+`sisi-lagos-fashion`, so running it twice leaves one tenant, not two — and it
+refuses to write to a database that already holds any other tenant, or to one
+reached over the network, unless you say so out loud (`--force`,
+`--allow-remote`). It runs as whatever the connection authenticates as, which for
+`DATABASE_URL` is the table owner or `service_role`: seeding bypasses RLS on
+purpose, because provisioning a tenant is not product traffic.
+[`supabase/seed/README.md`](supabase/seed/README.md) covers running it against a
+real Supabase project, the fixed uuid range the fixtures use, and the edge-case
+products (`stock = 0`, `active = false`) the out-of-stock and withdrawn paths
+test against.
+
 ## CI
 
 `.github/workflows/ci.yml` runs on every push and pull request and has two jobs,
@@ -222,9 +253,12 @@ npm run build
 ```
 
 `database` (Postgres 16 service container): the shim, then every migration, then
-the RLS assertions — `supabase/test-support/run.sh`. A schema whose RLS has never
+the RLS assertions — `supabase/test-support/run.sh` — then the demo seed applied
+twice and asserted on, `npm run seed -- --twice`. A schema whose RLS has never
 been executed is not verified, so this job is what makes the tenant-isolation
-claims in this README mean something.
+claims in this README mean something; a seed that has only ever run on one
+machine is not verified either, which is why CI re-runs it and compares
+fingerprints.
 
 ## Conventions
 
@@ -242,10 +276,9 @@ claims in this README mean something.
 
 ## Not in this PR
 
-Deliberately out of scope so far, in the order they are planned: seed data (one
-demo fashion tenant with 20 products, its policies and FAQs), webhook ingestion
+Deliberately out of scope so far, in the order they are planned: webhook ingestion
 (WhatsApp/Instagram), the outbound send service, the agent tool implementations,
 the agent orchestrator, negotiation logic, Paystack integration, speech-to-text,
 the dashboard UI and Supabase Auth, the conversation simulator, and deployment.
-The schema itself has landed — see [Database](#database) and
-`supabase/migrations/`.
+The schema and the demo tenant have landed — see [Database](#database),
+`supabase/migrations/` and `supabase/seed/`.

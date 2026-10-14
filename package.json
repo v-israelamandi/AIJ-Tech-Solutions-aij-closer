@@ -20,7 +20,8 @@
     "lint": "eslint .",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:db": "bash supabase/test-support/run.sh"
+    "test:db": "bash supabase/test-support/run.sh",
+    "seed": "bash supabase/seed/run.sh"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",
