@@ -1,0 +1,20 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "102290129340398",
+      "changes": [
+        {
+          "value": {
+            "event": "PENDING",
+            "message_template_id": 841951341432144,
+            "message_template_name": "order_confirmation_v2",
+            "message_template_language": "en_NG",
+            "reason": "NONE"
+          },
+          "field": "message_template_status_update"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,12 @@
+webhooks/meta/payload.test.ts:26:    // WhatsApp sends Unix seconds; 1792058400 is 2026-10-14T10:00:00Z.
+webhooks/meta/payload.test.ts:27:    expect(parsed.events[0]?.sentAt.toISOString()).toBe('2026-10-15T10:00:00.000Z');
+webhooks/meta/payload.test.ts:158:    expect(parsed.events[0]?.sentAt.toISOString()).toBe('2026-10-15T10:05:00.123Z');
+webhooks/meta/payload.test.ts:186:    expect(parsed.events[0]?.sentAt.toISOString()).toBe('2026-10-15T10:05:00.000Z');
+webhooks/meta/payload.test.ts:207:    expect(parsed.events[0]?.sentAt.toISOString()).toBe('2026-10-15T10:05:00.000Z');
+db/inbound-messages.integration.test.ts:103:/** The 2026-10-14T10:00:00Z the fixtures use, in Unix seconds. */
+db/inbound-messages.integration.test.ts:247:      expect(outcome.windowExpiresAt.toISOString()).toBe('2026-10-16T10:00:00.000Z');
+db/inbound-messages.integration.test.ts:248:      expect((await windowFor(waId))?.toISOString()).toBe('2026-10-16T10:00:00.000Z');
+db/inbound-messages.integration.test.ts:331:      expect((await windowFor(waId))?.toISOString()).toBe('2026-10-16T10:00:00.000Z');
+db/inbound-messages.integration.test.ts:351:      expect((await windowFor(waId))?.toISOString()).toBe('2026-10-17T11:00:00.000Z');
+db/inbound-messages.integration.test.ts:356:      expect((await windowFor(waId))?.toISOString()).toBe('2026-10-17T11:00:00.000Z');
+db/inbound-messages.integration.test.ts:490:      expect((await windowFor(waId))?.toISOString()).toBe('2026-10-16T10:00:00.000Z');

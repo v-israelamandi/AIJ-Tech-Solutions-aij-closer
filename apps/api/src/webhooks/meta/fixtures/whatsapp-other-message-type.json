@@ -1,0 +1,43 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "102290129340398",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "2348023456789",
+              "phone_number_id": "109876543210987"
+            },
+            "contacts": [
+              {
+                "profile": {
+                  "name": "Tunde Bakare"
+                },
+                "wa_id": "2348055512345"
+              }
+            ],
+            "messages": [
+              {
+                "from": "2348055512345",
+                "id": "wamid.HBgNMjM0ODA1NTUxMjM0NRUCABIYFjI5NzY1MjQ2NTA1OTI4Mzc0MTA2NTEA",
+                "timestamp": "1792058580",
+                "location": {
+                  "latitude": 6.5001345,
+                  "longitude": 3.3618922,
+                  "name": "Yaba, Lagos",
+                  "address": "Commercial Avenue, Yaba, Lagos, Nigeria",
+                  "url": "https://www.facebook.com/location/6.5001345,3.3618922"
+                },
+                "type": "location"
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}

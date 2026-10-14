@@ -4,11 +4,13 @@ import {
   conversationStatusSchema,
   messageDirectionSchema,
   messageTypeSchema,
+  offerStatusSchema,
   orderPaymentStatusSchema,
   type ChannelType,
   type ConversationStatus,
   type MessageDirection,
   type MessageType,
+  type OfferStatus,
   type OrderPaymentStatus,
 } from './index.js';
 
@@ -64,6 +66,20 @@ describe('@aij/shared domain enums', () => {
     });
   });
 
+  describe('offerStatusSchema', () => {
+    it('accepts proposed, accepted and rejected', () => {
+      for (const status of ['proposed', 'accepted', 'rejected'] as const) {
+        expect(offerStatusSchema.parse(status)).toBe(status);
+      }
+    });
+
+    it('rejects anything else, including the states the database rejects', () => {
+      expect(offerStatusSchema.safeParse('declined').success).toBe(false);
+      expect(offerStatusSchema.safeParse('expired').success).toBe(false);
+      expect(offerStatusSchema.safeParse(undefined).success).toBe(false);
+    });
+  });
+
   describe('orderPaymentStatusSchema', () => {
     it('accepts pending, paid, failed and refunded', () => {
       for (const status of ['pending', 'paid', 'failed', 'refunded'] as const) {
@@ -83,13 +99,15 @@ describe('@aij/shared domain enums', () => {
     const messageKind: MessageType = 'voice';
     const channel: ChannelType = 'whatsapp';
     const payment: OrderPaymentStatus = 'paid';
+    const offer: OfferStatus = 'proposed';
 
-    expect([status, direction, messageKind, channel, payment]).toEqual([
+    expect([status, direction, messageKind, channel, payment, offer]).toEqual([
       'human',
       'inbound',
       'voice',
       'whatsapp',
       'paid',
+      'proposed',
     ]);
   });
 });

@@ -25,6 +25,11 @@ export const REQUIRED_IN_PRODUCTION = [
   'DATABASE_URL',
   'SUPABASE_URL',
   'SUPABASE_SERVICE_ROLE_KEY',
+  // Meta webhook ingress: without these the callback is unverifiable, and the
+  // routes are not registered at all (see webhooks/meta/config.ts). A deployed
+  // service that is supposed to receive buyer messages must have them.
+  'META_APP_SECRET',
+  'META_VERIFY_TOKEN',
 ] as const;
 
 export const envSchema = z

@@ -1,0 +1,39 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "102290129340398",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "2348023456789",
+              "phone_number_id": "109876543210987"
+            },
+            "contacts": [
+              {
+                "profile": {
+                  "name": "Zainab Adeyemi"
+                },
+                "wa_id": "2348031234567"
+              }
+            ],
+            "messages": [
+              {
+                "from": "2348031234567",
+                "id": "wamid.HBgNMjM0ODAzMTIzNDU2NxUCABIYFjI5NzY1MjQzMTA3NDY0MTQ2ODk2MzcA",
+                "timestamp": "1792058400",
+                "text": {
+                  "body": "Good afternoon. How much is the Zainab Adire two-piece set?"
+                },
+                "type": "text"
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}
