@@ -87,6 +87,7 @@ variables when deployed.
 | `npm test` | Vitest once, all workspaces, from the root config (`vitest.workspace.ts`) |
 | `npm run test:watch` | Vitest in watch mode |
 | `npm run test:db` | Applies the migrations to a throwaway Postgres and asserts the RLS (needs `DATABASE_URL`; see [Database](#database)) |
+| `npm run test:integration` | The webhook ingress repository against a real, migrated and seeded Postgres (needs `DATABASE_URL`; see [Meta webhooks](#meta-webhooks)) |
 
 Single workspace (any script works this way):
 
@@ -122,7 +123,8 @@ Required-ness today: values the api needs in order to boot have development
 defaults; integration credentials are optional until the feature that consumes
 them lands (that PR removes the matching `.optional()`); and when
 `NODE_ENV=production` the deployment-critical keys below are required —
-`DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`.
+`DATABASE_URL`, `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `META_APP_SECRET`,
+`META_VERIFY_TOKEN`.
 
 | Variable | Purpose | Where it comes from |
 | --- | --- | --- |
@@ -237,6 +239,50 @@ real Supabase project, the fixed uuid range the fixtures use, and the edge-case
 products (`stock = 0`, `active = false`) the out-of-stock and withdrawn paths
 test against.
 
+## Meta webhooks
+
+Both channels arrive at one endpoint, because one Meta app owns both:
+`GET /webhooks/meta` for the subscription handshake and `POST /webhooks/meta` for
+every delivery (`apps/api/src/webhooks/meta/`). The body's `object` field says
+which product a payload came from.
+
+| Step | What happens | What it costs a rejected caller |
+| --- | --- | --- |
+| `GET` verification | `hub.mode=subscribe` and a constant-time compare of `hub.verify_token` against `META_VERIFY_TOKEN`; the raw `hub.challenge` is echoed back and nothing else. | 403, no challenge in the body |
+| Signature | `X-Hub-Signature-256` is HMAC-SHA256 of **the exact bytes Meta sent**, keyed with `META_APP_SECRET`, compared in constant time. The body is kept as bytes by a route-scoped content-type parser, so the HMAC never covers a re-serialised object. | 401 and **no parse, no write, no side effect of any kind** |
+| Parse | Zod schemas for both payload shapes produce normalised events, or an `ignored` reason (`status_callback`, `read_receipt`, `unsupported_event`, `unsupported_message_type`, `malformed_entry`). | 200 — understood and deliberately not acted on |
+| Route | `channels.phone_number_id` (WhatsApp) or `channels.instagram_account_id` (Instagram) resolves the tenant; only an **active** channel routes. | 200, logged with IDs only, no rows |
+| Dedupe | `messages.meta_message_id` has a unique index; the insert is `on conflict do nothing`, so a redelivery inserts nothing, does not move `window_expires_at`, and still answers 200. The database is the arbiter — a fast-path read only avoids touching anything on the common retry. | 200 with `duplicates: 1` |
+| Persist | Contact upsert by `(tenant_id, channel, external_id)`, find-or-create the open conversation (one per contact, enforced by a partial unique index), insert the inbound message, then set `window_expires_at` to the newest inbound time + 24 hours (`greatest`, so a late-arriving message can only extend it). | — |
+
+Anything else — the database being unreachable — is a 5xx on purpose, because
+Meta retries and the dedupe above makes retrying safe.
+
+The `pg` connection this runs on is the api's one privileged, RLS-bypassing
+connection (`apps/api/src/db/`): Meta sends no JWT, so there is no `auth.uid()`
+to scope a SELECT by; the tenant comes from the channel lookup instead. It is
+never used to answer a dashboard request.
+
+Payload fixtures live in `apps/api/src/webhooks/meta/fixtures/` — 11 complete
+WhatsApp and Instagram bodies (text, voice note, image, status callback, read
+receipt, echo, unknown message type, unknown event, an unroutable phone number).
+They are shaped from Meta's documented events rather than captured from live
+traffic, because there is no Meta app on this account yet; the file's README says
+so field by field.
+
+```bash
+createdb aij_dev
+export DATABASE_URL=postgresql://localhost/aij_dev
+npm run test:db && npm run seed     # shim + migrations + demo tenant
+npm test                            # 92 unit tests; the integration file skips
+npm run test:integration            # 11 tests against the real database
+```
+
+Media is not downloaded yet: an inbound voice note or image is stored with its
+type and caption, and `messages.media_url` stays null until a later PR fetches
+the media (that PR is also what needs the Meta media id, which this one parses
+but does not persist).
+
 ## CI
 
 `.github/workflows/ci.yml` runs on every push and pull request and has two jobs,
@@ -258,7 +304,10 @@ twice and asserted on, `npm run seed -- --twice`. A schema whose RLS has never
 been executed is not verified, so this job is what makes the tenant-isolation
 claims in this README mean something; a seed that has only ever run on one
 machine is not verified either, which is why CI re-runs it and compares
-fingerprints.
+fingerprints. The same job then runs `npm run test:integration` against
+that database: a delivery is stored through the repository, its contact,
+conversation and message rows are asserted, and the same delivery is sent again
+to prove the unique index — not a read — refuses the second copy.
 
 ## Conventions
 
@@ -276,8 +325,7 @@ fingerprints.
 
 ## Not in this PR
 
-Deliberately out of scope so far, in the order they are planned: webhook ingestion
-(WhatsApp/Instagram), the outbound send service, the agent tool implementations,
+Deliberately out of scope so far, in the order they are planned: the outbound send service, the agent tool implementations,
 the agent orchestrator, negotiation logic, Paystack integration, speech-to-text,
 the dashboard UI and Supabase Auth, the conversation simulator, and deployment.
 The schema and the demo tenant have landed — see [Database](#database),

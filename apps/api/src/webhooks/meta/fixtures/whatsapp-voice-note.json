@@ -1,0 +1,42 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "102290129340398",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "2348023456789",
+              "phone_number_id": "109876543210987"
+            },
+            "contacts": [
+              {
+                "profile": {
+                  "name": "Chidinma Okonkwo"
+                },
+                "wa_id": "2347012345678"
+              }
+            ],
+            "messages": [
+              {
+                "from": "2347012345678",
+                "id": "wamid.HBgNMjM0NzAxMjM0NTY3OBUCABIYFjI5NzY1MjQ0NTE4ODgyNjA2OTgxMjkA",
+                "timestamp": "1792058460",
+                "audio": {
+                  "mime_type": "audio/ogg; codecs=opus",
+                  "sha256": "9f8a4b6d2c1e0f3a5b7d9c8e6f4a2b0d1c3e5f7a9b8d6c4e2f0a1b3d5c7e9f8a",
+                  "id": "1284829103746521",
+                  "voice": true
+                },
+                "type": "audio"
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}

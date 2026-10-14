@@ -1,0 +1,6 @@
+17:[41m[1m FAIL [22m[49m [30m[46m @aij/api [49m[39m src/app.test.ts[2m [ apps/api/src/app.test.ts ][22m
+18:[41m[1m FAIL [22m[49m [30m[46m @aij/api [49m[39m src/db/inbound-messages.integration.test.ts[2m [ apps/api/src/db/inbound-messages.integration.test.ts ][22m
+19:[41m[1m FAIL [22m[49m [30m[46m @aij/api [49m[39m src/webhooks/meta/payload.test.ts[2m [ apps/api/src/webhooks/meta/payload.test.ts ][22m
+20:[41m[1m FAIL [22m[49m [30m[46m @aij/api [49m[39m src/webhooks/meta/routes.test.ts[2m [ apps/api/src/webhooks/meta/routes.test.ts ][22m
+41:[2m Test Files [22m [1m[31m4 failed[39m[22m[2m | [22m[1m[32m5 passed[39m[22m[90m (9)[39m
+42:[2m      Tests [22m [1m[32m34 passed[39m[22m[90m (34)[39m

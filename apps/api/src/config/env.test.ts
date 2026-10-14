@@ -6,6 +6,8 @@ const productionEnv = {
   DATABASE_URL: 'postgresql://postgres:pw@db.example.supabase.co:5432/postgres',
   SUPABASE_URL: 'https://example.supabase.co',
   SUPABASE_SERVICE_ROLE_KEY: 'service-role-key',
+  META_APP_SECRET: 'app-secret',
+  META_VERIFY_TOKEN: 'verify-token',
 };
 
 describe('loadEnv', () => {
@@ -61,6 +63,16 @@ describe('loadEnv', () => {
     expect(() => loadEnv({ NODE_ENV: 'production' })).toThrowError(/DATABASE_URL/);
     expect(() => loadEnv({ NODE_ENV: 'production' })).toThrowError(/SUPABASE_URL/);
     expect(() => loadEnv({ NODE_ENV: 'production' })).toThrowError(/SUPABASE_SERVICE_ROLE_KEY/);
+    expect(() => loadEnv({ NODE_ENV: 'production' })).toThrowError(/META_APP_SECRET/);
+    expect(() => loadEnv({ NODE_ENV: 'production' })).toThrowError(/META_VERIFY_TOKEN/);
+  });
+
+  it('rejects a production environment that is missing only the Meta keys', () => {
+    const { META_APP_SECRET: _secret, ...withoutSecret } = productionEnv;
+    const { META_VERIFY_TOKEN: _token, ...withoutToken } = productionEnv;
+
+    expect(() => loadEnv(withoutSecret)).toThrowError(/META_APP_SECRET/);
+    expect(() => loadEnv(withoutToken)).toThrowError(/META_VERIFY_TOKEN/);
   });
 
   it('accepts a complete production environment', () => {

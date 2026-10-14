@@ -21,6 +21,7 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:db": "bash supabase/test-support/run.sh",
+    "test:integration": "vitest run apps/api/src/db/inbound-messages.integration.test.ts",
     "seed": "bash supabase/seed/run.sh"
   },
   "devDependencies": {

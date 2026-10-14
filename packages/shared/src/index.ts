@@ -6,4 +6,5 @@
 export * from './channel.js';
 export * from './conversation.js';
 export * from './message.js';
+export * from './offer.js';
 export * from './order.js';

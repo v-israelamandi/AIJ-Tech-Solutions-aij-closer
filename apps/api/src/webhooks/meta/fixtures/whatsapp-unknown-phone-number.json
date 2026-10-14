@@ -1,0 +1,39 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "102290129340398",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "2349000000000",
+              "phone_number_id": "999999999999999"
+            },
+            "contacts": [
+              {
+                "profile": {
+                  "name": "Not Our Buyer"
+                },
+                "wa_id": "2348000000001"
+              }
+            ],
+            "messages": [
+              {
+                "from": "2348000000001",
+                "id": "wamid.HBgNMjM0ODAwMDAwMDAwMRUCABIYFjI5NzY1MjQ3MTY2MDMwMTk2NDg3MTeA",
+                "timestamp": "1792058640",
+                "text": {
+                  "body": "Hello, is this Sneakers Hub?"
+                },
+                "type": "text"
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}

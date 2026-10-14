@@ -1,0 +1,42 @@
+{
+  "object": "whatsapp_business_account",
+  "entry": [
+    {
+      "id": "102290129340398",
+      "changes": [
+        {
+          "value": {
+            "messaging_product": "whatsapp",
+            "metadata": {
+              "display_phone_number": "2348023456789",
+              "phone_number_id": "109876543210987"
+            },
+            "contacts": [
+              {
+                "profile": {
+                  "name": "Blessing Eze"
+                },
+                "wa_id": "2348099887766"
+              }
+            ],
+            "messages": [
+              {
+                "from": "2348099887766",
+                "id": "wamid.HBgNMjM0ODA5OTg4Nzc2NhUCABIYFjI5NzY1MjQ1MTIyNjA3MzQ4NTkxMDQA",
+                "timestamp": "1792058520",
+                "image": {
+                  "mime_type": "image/jpeg",
+                  "sha256": "c0d3e5f7a9b8d6c4e2f0a1b3d5c7e9f8a9f8a4b6d2c1e0f3a5b7d9c8e6f4a2b0",
+                  "caption": "I saw this on your page. Does it come in a bigger size?",
+                  "id": "9847123056712389"
+                },
+                "type": "image"
+              }
+            ]
+          },
+          "field": "messages"
+        }
+      ]
+    }
+  ]
+}
