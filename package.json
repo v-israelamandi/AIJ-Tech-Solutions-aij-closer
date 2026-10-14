@@ -19,7 +19,8 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "eslint .",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:db": "bash supabase/test-support/run.sh"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.5",

@@ -37,8 +37,10 @@ packages/
 docs/
   PROJECT_BRIEF.md        the brief: scope, stack, standards
 supabase/
-  migrations/             SQL migrations (schema lands in the next PR)
-.github/workflows/ci.yml  CI: npm ci -> typecheck -> lint -> test -> build
+  migrations/             the schema: tables, constraints, RLS (see its README)
+  test-support/           test-only harness that executes the RLS and asserts it
+.github/workflows/ci.yml  CI: npm ci -> typecheck -> lint -> test -> build, and
+                          Postgres 16 -> migrations -> RLS assertions
 ```
 
 ## Prerequisites
@@ -84,6 +86,7 @@ variables when deployed.
 | `npm run lint` | ESLint 9 (flat config at the repo root) over the whole repo |
 | `npm test` | Vitest once, all workspaces, from the root config (`vitest.workspace.ts`) |
 | `npm run test:watch` | Vitest in watch mode |
+| `npm run test:db` | Applies the migrations to a throwaway Postgres and asserts the RLS (needs `DATABASE_URL`; see [Database](#database)) |
 
 Single workspace (any script works this way):
 
@@ -144,10 +147,71 @@ them lands (that PR removes the matching `.optional()`); and when
 | `STT_API_KEY` | Credential for that speech-to-text provider. | The provider's dashboard |
 | `CHANNEL_TOKEN_ENCRYPTION_KEY` | 32-byte key (base64) used to encrypt channel access tokens at rest. | Generate your own: `openssl rand -base64 32` |
 
+## Database
+
+The schema lives in [`supabase/migrations/`](supabase/migrations/) — versioned
+SQL, applied in filename order. [`supabase/migrations/README.md`](supabase/migrations/README.md)
+covers how migrations are named and applied; the short version is
+`supabase db push` for a linked project, or `psql "$DATABASE_URL" -v
+ON_ERROR_STOP=1 -f <migration>` in order for anything else.
+
+| Table | One line |
+| --- | --- |
+| `tenants` | One row per client business (vendor): name, slug, tone profile, currency, Paystack subaccount. |
+| `tenant_users` | Membership: which Supabase `auth.users` row belongs to which tenant, with a role. What RLS reads. |
+| `channels` | A WhatsApp or Instagram inbox belonging to a tenant. Holds the Meta token **encrypted** (`access_token_encrypted`), plus the webhook routing keys `phone_number_id` / `instagram_account_id` (globally unique). |
+| `products` | Catalog: `list_price`, `floor_price`, `stock`, `photos` (jsonb), `active`. `floor_price <= list_price` is enforced by the database. |
+| `policies` | One row per tenant: `delivery_fees` (jsonb), `return_policy`, `discount_steps` (jsonb), `max_counter_steps`, `bulk_threshold`, `handoff_rules` (jsonb). |
+| `knowledge` | Per-tenant FAQ entries (question/answer/tags) used as grounding. Never a source of prices. |
+| `contacts` | A buyer on one channel; unique per `(tenant_id, channel, external_id)`. |
+| `conversations` | One thread with one buyer: `status` (`bot` \| `human` \| `closed`, defaults to `bot`), `window_expires_at` (Meta's 24-hour window), `handoff_reason`. |
+| `messages` | Every inbound/outbound message: `direction`, `type` (`text` \| `voice` \| `image`), `content`, `tool_calls` (jsonb audit trail), `meta_message_id` (unique when set, for webhook dedupe). |
+| `offers` | Each price the agent put on the table: `price`, `quantity`, `counter_step`, `status`. The record that no offer ever went below the floor. |
+| `orders` | The money record: `unit_price`, `delivery_fee`, `amount`, `paystack_reference` (unique when set), `payment_status`. |
+| `weekly_reports` | One generated report per tenant per week, `payload` jsonb. |
+
+**Money is an integer count of kobo** (NGN minor units) in every money column
+and inside every jsonb field that holds an amount: ₦25,000 is `2500000`. Never a
+float, never a formatted string — the product's core principle is that code,
+not the model, makes every price commitment, and integers keep those
+commitments exact. Column comments carry the unit; `orders.amount` is
+constrained to `(unit_price * quantity) + delivery_fee`.
+
+**Tenant isolation is enforced by row-level security**, and asserted, not
+assumed. Every table has RLS enabled; every tenant-scoped policy is written
+against `public.is_tenant_member(uuid)` (a `security definer`, `stable` helper
+with a locked-down `search_path`, reading `auth.uid()` from `tenant_users`).
+`authenticated` users see and write only their own tenant's rows, `anon` has no
+policy anywhere and therefore reads nothing, and `service_role` bypasses RLS and
+is used server-side only. Child rows reference their parents on
+`(tenant_id, id)`, so a row cannot be attached to another tenant's conversation
+even by code that bypasses RLS. See
+[`supabase/test-support/`](supabase/test-support/).
+
+### Running the database tests
+
+The migrations are executed and the RLS assertions run against a throwaway
+Postgres (16, same as CI). `DATABASE_URL` points at it:
+
+```bash
+createdb aij_test
+export DATABASE_URL=postgresql://localhost/aij_test
+npm run test:db        # shim -> migrations -> RLS assertions, exits non-zero on failure
+```
+
+`npm run test:db` is `supabase/test-support/run.sh`, which needs nothing but
+`psql` (no Node dependencies for the database tests). It refuses to run against
+a database that already has tables in `public`, so it cannot be pointed at a
+real project by accident — and it must never be, because
+`supabase/test-support/` is test-only scaffolding that stands in for Supabase's
+own bootstrap.
+
 ## CI
 
-`.github/workflows/ci.yml` runs on every push and pull request on Node 20 (from
-`.nvmrc`) and fails the job on the first broken step:
+`.github/workflows/ci.yml` runs on every push and pull request and has two jobs,
+each of which fails on the first broken step.
+
+`verify` (Node 20, from `.nvmrc`):
 
 ```bash
 npm ci
@@ -156,6 +220,11 @@ npm run lint
 npm test
 npm run build
 ```
+
+`database` (Postgres 16 service container): the shim, then every migration, then
+the RLS assertions — `supabase/test-support/run.sh`. A schema whose RLS has never
+been executed is not verified, so this job is what makes the tenant-isolation
+claims in this README mean something.
 
 ## Conventions
 
@@ -173,9 +242,10 @@ npm run build
 
 ## Not in this PR
 
-Deliberately out of scope for the scaffold, in the order they are planned:
-webhook ingestion (WhatsApp/Instagram), the agent tool implementations,
-negotiation logic, Paystack integration, speech-to-text, the dashboard UI and
-Supabase Auth, the conversation simulator, and the SQL schema plus seed data
-(which land in `supabase/migrations/` next — see its
-[README](supabase/migrations/README.md)).
+Deliberately out of scope so far, in the order they are planned: seed data (one
+demo fashion tenant with 20 products, its policies and FAQs), webhook ingestion
+(WhatsApp/Instagram), the outbound send service, the agent tool implementations,
+the agent orchestrator, negotiation logic, Paystack integration, speech-to-text,
+the dashboard UI and Supabase Auth, the conversation simulator, and deployment.
+The schema itself has landed — see [Database](#database) and
+`supabase/migrations/`.
