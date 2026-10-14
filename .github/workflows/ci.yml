@@ -77,3 +77,15 @@ jobs:
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aij_test
         run: npm run test:db
+
+      # The demo tenant (supabase/seed/): one Lagos fashion vendor, 20 products,
+      # its policies, 16 FAQs, its owner and both Meta channels — the data every
+      # later feature is built against. `--twice` applies the seed a second time
+      # and compares an md5 fingerprint of all the fixture rows between the two
+      # runs, so a seed that duplicates its tenant, drifts from the channel
+      # routing keys PR 4 resolves tenants by, or breaks the negotiation ladder
+      # fails here rather than on a machine that happened to be seeded once.
+      - name: Seed the demo tenant (twice, for idempotency) and assert it
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aij_test
+        run: npm run seed -- --twice

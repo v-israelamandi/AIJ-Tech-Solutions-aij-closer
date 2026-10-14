@@ -116,3 +116,9 @@ DATABASE_URL=postgresql://localhost/aij_test supabase/test-support/run.sh
 ```
 
 See `supabase/test-support/README.md` for what the assertions cover.
+## supabase/seed/ — the demo tenant (not a migration)
+`supabase/seed/` holds fixture data, not schema: one demo fashion tenant with 20
+products, its policies, its FAQs, its owner and both Meta channels. It is applied
+*after* the migrations, by `supabase/seed/run.sh` (`npm run seed`), which is
+idempotent and asserts the result. It is never applied by `supabase db push` or
+by `npm run test:db`. See `supabase/seed/README.md`.
