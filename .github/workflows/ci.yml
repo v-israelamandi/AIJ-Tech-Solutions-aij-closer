@@ -37,3 +37,43 @@ jobs:
 
       - name: Build
         run: npm run build
+
+  database:
+    name: migrations + RLS assertions (Postgres 16)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: aij_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install psql
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends postgresql-client
+          psql --version
+
+      # The shim stands in for Supabase's own bootstrap (roles, auth schema,
+      # auth.uid(), default privileges) so the migrations can be applied
+      # unchanged to a stock Postgres. Then: every migration in filename order,
+      # then the RLS assertions, which exit non-zero on any failure. A schema
+      # whose RLS has never been executed is not verified.
+      # See supabase/test-support/README.md — test-only, never applied to a real
+      # Supabase project.
+      - name: Apply shim, migrations and RLS assertions
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aij_test
+        run: npm run test:db
